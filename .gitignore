@@ -1,0 +1,16 @@
+data
+data/*
+.vscode
+__pycache__
+*.pyc
+*.ipynb
+logs/
+new_logs/
+task.sh
+*.npy
+*.pth
+*.pt
+new_logs*
+*.txt
+models/
+saved_models/
