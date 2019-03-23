@@ -34,7 +34,7 @@ class BaseModel(nn.Module):
         v_repr = self.v_net(v_emb)
         joint_repr = q_repr * v_repr
         logits = self.classifier(joint_repr)
-        return logits
+        return logits, joint_repr
 
 def build_baseline0(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)

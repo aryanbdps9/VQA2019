@@ -27,6 +27,7 @@ def train(model, train_loader, eval_loader, num_epochs, output):
     optim = torch.optim.Adamax(model.parameters())
     logger = utils.Logger(os.path.join(output, 'log.txt'))
     best_eval_score = 0
+    loss_dist_fn = nn.MSELoss()
 
     itr = 0
     for epoch in range(num_epochs):
@@ -34,17 +35,20 @@ def train(model, train_loader, eval_loader, num_epochs, output):
         train_score = 0
         t = time.time()
 
-        for i, (v, b, q, a) in enumerate(train_loader):
+        for i, (v, b, q, a, word_vec) in enumerate(train_loader):
             itr += 1
             # print("v.size", v.size(), "v.size(0)", v.size(0))
             v = Variable(v).cuda()
             b = Variable(b).cuda()
             q = Variable(q).cuda()
             a = Variable(a).cuda()
+            word_vec = word_vec.cuda()
 
-            pred = model(v, b, q, a)
-            loss = instance_bce_with_logits(pred, a)
+            pred, pred_word_vec = model(v, b, q, a)
+            loss_bce = instance_bce_with_logits(pred, a)
             loss.backward()
+            loss_dist = loss_dist_fn(pred_word_vec, word_vec)
+            loss = loss_bce + loss_dist
             nn.utils.clip_grad_norm_(model.parameters(), 0.25)
             optim.step()
             optim.zero_grad()

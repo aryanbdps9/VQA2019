@@ -99,7 +99,7 @@ def _load_dataset(dataroot, name, img_id2val):
 
 
 class VQAFeatureDataset(Dataset):
-    def __init__(self, name, dictionary, dataroot='data'):
+    def __init__(self, name, dictionary, dataroot='data', glove_arr=None, w2glov=None):
         super(VQAFeatureDataset, self).__init__()
         assert name in ['train', 'val']
         ans2label_path = os.path.join(dataroot, 'cache', 'trainval_ans2label.pkl')
@@ -108,6 +108,8 @@ class VQAFeatureDataset(Dataset):
         self.ans2label = cPickle.load(open(ans2label_path, 'rb'))
         # print("Loading label2ans...")
         self.label2ans = cPickle.load(open(label2ans_path, 'rb'))
+        self.glove_arr, self.w2glov = glove_arr, w2glov
+        self.label2glove = {ans2label[w]:w2glove[w] for w in self.ans2label.keys()}
         self.num_ans_candidates = len(self.ans2label)
 
         self.dictionary = dictionary
@@ -119,11 +121,24 @@ class VQAFeatureDataset(Dataset):
         h5_path = os.path.join(dataroot, '%s36.hdf5' % name)
         print("h5_path", h5_path)
         hf = h5py.File(h5_path, 'r')
+
             # print("Creating array for features and spatials")
             # self.features = np.array(hf.get('image_features'))
             # self.spatials = np.array(hf.get('spatial_features'))
         self.features = hf['image_features']
         self.spatials = hf['spatial_features']
+
+        question_idx_path = os.path.join(dataroot, '%s_questions_idx.txt' % name)
+        f_question_idx = open(question_idx_path, 'r')
+        # questions_idx = hf_question_idx['idx']
+        # for i in range(questions_idx.size):
+
+        q_idx = f_question_idx.read().split()
+        self.questions_idx = {q_idx[i]:i for i in range(len(q_idx))}
+
+        question_elmo_path = os.path.join(dataroot, '%s_questions_elmo.hdf5' % name)
+        hf_question_elmo = h5py.File(question_elmo_path, 'r')
+        self.questions_elmo = hf_question_elmo['elmo']
 
         self.entries = _load_dataset(dataroot, name, self.img_id2idx)
 
@@ -161,13 +176,17 @@ class VQAFeatureDataset(Dataset):
             labels = np.array(answer['labels'])
             scores = np.array(answer['scores'], dtype=np.float32)
             if len(labels):
+                best_label = labels[np.argmax(scores)]
+                best_label_repr = torch.from_numpy(self.glove_arr[label2glove[best_label],:])
                 labels = torch.from_numpy(labels)
                 scores = torch.from_numpy(scores)
                 entry['answer']['labels'] = labels
                 entry['answer']['scores'] = scores
+                entry['answer']['best_ansvec'] = best_label_repr
             else:
                 entry['answer']['labels'] = None
                 entry['answer']['scores'] = None
+                entry['answer']['best_ansvec'] = None
 
     def __getitem__(self, index):
         entry = self.entries[index]
@@ -176,15 +195,18 @@ class VQAFeatureDataset(Dataset):
         # print("features size = ", features.size())
         spatials = torch.from_numpy(self.spatials[entry['image']])
 
-        question = entry['q_token']
+        # question = entry['q_token']
+        
+        question = torch.from_numpy(self.hf_question_elmo[self.questions_idx['question_id']])
         answer = entry['answer']
         labels = answer['labels']
         scores = answer['scores']
+        ans_vec = answer['best_ansvec']
         target = torch.zeros(self.num_ans_candidates)
         if labels is not None:
             target.scatter_(0, labels, scores)
 
-        return features, spatials, question, target
+        return features, spatials, question, target, ans_vec
 
     def __len__(self):
         return len(self.entries)

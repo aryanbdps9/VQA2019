@@ -38,14 +38,15 @@ if __name__ == '__main__' and True:
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed(args.seed)
     torch.backends.cudnn.benchmark = True
+    emb_mat, w2imap = utils.get_gloves()
 
     dictionary = Dictionary.load_from_file('data/dictionary.pkl')
-    train_dset = VQAFeatureDataset('train', dictionary)
-    eval_dset = VQAFeatureDataset('val', dictionary)
+    train_dset = VQAFeatureDataset('train', dictionary, emb_mat, w2imap)
+    eval_dset = VQAFeatureDataset('val', dictionary, emb_mat, w2imap)
     batch_size = args.batch_size
 
-    train_loader = DataLoader(train_dset, batch_size, shuffle=True, num_workers=2)
-    eval_loader =  DataLoader(eval_dset, batch_size, shuffle=True, num_workers=2)
+    train_loader = DataLoader(train_dset, batch_size, shuffle=True, num_workers=4)
+    eval_loader =  DataLoader(eval_dset, batch_size, shuffle=True, num_workers=1)
     # train_dset.__getitem__(2)
 
     constructor = 'build_%s' % args.model
