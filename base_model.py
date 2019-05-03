@@ -14,6 +14,7 @@ class BaseModel(nn.Module):
         self.q_net = q_net
         self.v_net = v_net
         self.classifier = classifier
+        self.funnel = nn.Linear(1024, 300)
 
     def forward(self, v, b, q, labels):
         """Forward
@@ -24,9 +25,10 @@ class BaseModel(nn.Module):
 
         return: logits, not probs
         """
-        w_emb = self.w_emb(q)
+        # w_emb = self.w_emb(q)
+        w_emb = q
         q_emb = self.q_emb(w_emb) # [batch, q_dim]
-
+        # q_emb = q
         att = self.v_att(v, q_emb)
         v_emb = (att * v).sum(1) # [batch, v_dim]
 
@@ -34,7 +36,7 @@ class BaseModel(nn.Module):
         v_repr = self.v_net(v_emb)
         joint_repr = q_repr * v_repr
         logits = self.classifier(joint_repr)
-        return logits, joint_repr
+        return logits, self.funnel(joint_repr)
 
 def build_baseline0(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
@@ -49,7 +51,7 @@ def build_baseline0(dataset, num_hid):
 
 def build_baseline0_newatt(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
-    q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
+    q_emb = QuestionEmbedding(1024, num_hid, 1, False, 0.0)
     v_att = NewAttention(dataset.v_dim, q_emb.num_hid, num_hid)
     q_net = FCNet([q_emb.num_hid, num_hid])
     v_net = FCNet([dataset.v_dim, num_hid])

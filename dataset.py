@@ -2,8 +2,11 @@ from __future__ import print_function
 import os
 import json
 import cPickle
+# import _pickle as cPickle
 import numpy as np
 import utils
+# import torch.multiprocessing
+# torch.multiprocessing.set_start_method('spawn', force=True)
 import h5py
 import torch
 from torch.utils.data import Dataset
@@ -102,6 +105,8 @@ class VQAFeatureDataset(Dataset):
     def __init__(self, name, dictionary, dataroot='data', glove_arr=None, w2glov=None):
         super(VQAFeatureDataset, self).__init__()
         assert name in ['train', 'val']
+        print("dataroot", dataroot)
+        self.name = name
         ans2label_path = os.path.join(dataroot, 'cache', 'trainval_ans2label.pkl')
         label2ans_path = os.path.join(dataroot, 'cache', 'trainval_label2ans.pkl')
         # print("Loading ans2label...")
@@ -109,18 +114,21 @@ class VQAFeatureDataset(Dataset):
         # print("Loading label2ans...")
         self.label2ans = cPickle.load(open(label2ans_path, 'rb'))
         self.glove_arr, self.w2glov = glove_arr, w2glov
-        self.label2glove = {ans2label[w]:w2glove[w] for w in self.ans2label.keys()}
+        self.label2glove = {self.ans2label[w]:w2glov.get(w, -3) for w in self.ans2label.keys()}
+        # self.label2glove = {ans2label[w]:w2glov[w] for w in self.ans2label.keys()}
         self.num_ans_candidates = len(self.ans2label)
 
         self.dictionary = dictionary
+        self.foLimit = 4
 
         # print("Loading imgid2idx..." % name)
         self.img_id2idx = cPickle.load(
             open(os.path.join(dataroot, '%s36_imgid2idx.pkl' % name)))
         print('loading features from h5 file')
         h5_path = os.path.join(dataroot, '%s36.hdf5' % name)
+        self.h5_path = h5_path
         print("h5_path", h5_path)
-        hf = h5py.File(h5_path, 'r')
+        hf = h5py.File(h5_path, 'r', swmr=True)
 
             # print("Creating array for features and spatials")
             # self.features = np.array(hf.get('image_features'))
@@ -133,12 +141,14 @@ class VQAFeatureDataset(Dataset):
         # questions_idx = hf_question_idx['idx']
         # for i in range(questions_idx.size):
 
-        q_idx = f_question_idx.read().split()
-        self.questions_idx = {q_idx[i]:i for i in range(len(q_idx))}
+        q_idx = f_question_idx.read().strip().split()
+        self.questions_idx = {int(q_idx[i]):str(i) for i in range(len(q_idx))}
 
         question_elmo_path = os.path.join(dataroot, '%s_questions_elmo.hdf5' % name)
-        hf_question_elmo = h5py.File(question_elmo_path, 'r')
-        self.questions_elmo = hf_question_elmo['elmo']
+        self.question_elmo_path = question_elmo_path
+        hf_question_elmo = h5py.File(question_elmo_path, 'r', swmr=True)
+        print("hf_question_elmo.swmr_mode", hf_question_elmo.swmr_mode)
+        self.questions_elmo = hf_question_elmo #['elmo']
 
         self.entries = _load_dataset(dataroot, name, self.img_id2idx)
 
@@ -147,6 +157,8 @@ class VQAFeatureDataset(Dataset):
         # print("type features = ", type(self.features))#, type(self.features[0]))
         self.v_dim = self.features[0:1].shape[2]
         self.s_dim = self.spatials[0:1].shape[2]
+        hf.close()
+        hf_question_elmo.close()
 
     def tokenize(self, max_length=14):
         """Tokenizes the questions.
@@ -177,7 +189,7 @@ class VQAFeatureDataset(Dataset):
             scores = np.array(answer['scores'], dtype=np.float32)
             if len(labels):
                 best_label = labels[np.argmax(scores)]
-                best_label_repr = torch.from_numpy(self.glove_arr[label2glove[best_label],:])
+                best_label_repr = torch.from_numpy(self.glove_arr[self.label2glove[best_label],:])
                 labels = torch.from_numpy(labels)
                 scores = torch.from_numpy(scores)
                 entry['answer']['labels'] = labels
@@ -189,23 +201,59 @@ class VQAFeatureDataset(Dataset):
                 entry['answer']['best_ansvec'] = None
 
     def __getitem__(self, index):
+        # index = 247573
+        # print("getitem:{}[{}]".format(self.name, index))
         entry = self.entries[index]
+        qid = entry['question_id']
+        # print(type(qid))
         # print("entry['image']", entry['image'], "index", index)
-        features = torch.from_numpy(self.features[entry['image']])
-        # print("features size = ", features.size())
-        spatials = torch.from_numpy(self.spatials[entry['image']])
+
+        # features = torch.from_numpy(self.features[entry['image']])
+        # # print("features size = ", features.size())
+        # spatials = torch.from_numpy(self.spatials[entry['image']])
+        # question = torch.tensor(self.questions_elmo[self.questions_idx[qid]])
+
+        if(self.foLimit > 0):
+            self.foLimit -= 1
+            self.hflater = h5py.File(self.h5_path, 'r', swmr=True)
+            features = torch.from_numpy(self.hflater['image_features'][entry['image']])
+            spatials = torch.from_numpy(self.hflater['spatial_features'][entry['image']])
+            self.qhflater = h5py.File(self.question_elmo_path, 'r', swmr=True)
+            question = torch.tensor(self.qhflater[self.questions_idx[qid]])
+        else:
+            features = torch.from_numpy(self.hflater['image_features'][entry['image']])
+            spatials = torch.from_numpy(self.hflater['spatial_features'][entry['image']])
+            question = torch.tensor(self.qhflater[self.questions_idx[qid]])
+
+        # with h5py.File(self.h5_path, 'r', swmr=True) as hf:
+        #     features = torch.from_numpy(hf['image_features'][entry['image']])
+        #     # print("features size = ", features.size())
+        #     spatials = torch.from_numpy(hf['spatial_features'][entry['image']])
+        # with h5py.File(self.question_elmo_path, 'r', swmr=True) as qhf:
+        #     question = torch.tensor(qhf[self.questions_idx[qid]])
+        qs = question.size(0)
+        if qs > 14:
+            question = question[:14, :]
+        elif qs < 14:
+            q = torch.zeros(14, 1024)
+            q[:qs, :] = question
+            question = q
 
         # question = entry['q_token']
-        
-        question = torch.from_numpy(self.hf_question_elmo[self.questions_idx['question_id']])
+
+        # question = torch.tensor(self.questions_elmo[self.questions_idx[qid]])
         answer = entry['answer']
         labels = answer['labels']
         scores = answer['scores']
         ans_vec = answer['best_ansvec']
+        if ans_vec is None:
+            ans_vec = torch.zeros(300)
+            # print("ans_vecof bestansvec is None")
         target = torch.zeros(self.num_ans_candidates)
         if labels is not None:
             target.scatter_(0, labels, scores)
 
+        # print("getitem:{}[{}]:\tquestion[{}], ans_vec[{}]".format(self.name, index,question.size(), ans_vec.size()))
         return features, spatials, question, target, ans_vec
 
     def __len__(self):

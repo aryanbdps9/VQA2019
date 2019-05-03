@@ -7,6 +7,8 @@ from PIL import Image
 import torch
 import torch.nn as nn
 from tensorboardX import SummaryWriter
+import gc
+import datetime
 
 emb_dim = 300
 GloveEmbeddings = {}
@@ -137,11 +139,20 @@ class Logger(object):
     def __init__(self, output_name):
         dirname = os.path.dirname(output_name)
         self.expt_name = os.path.join(dirname, "run", output_name)
+        date_time = str(datetime.datetime.now())
+        date_time = date_time.split('.')[0]
+        date_time = date_time.replace('-', '_')
+        date_time = date_time.replace(':', '_')
+        date_time = date_time.replace(' ', '__')
+        self.expt_name2 = os.path.join(dirname, "run", date_time)
+        print("Logger:expt_name ", self.expt_name2)
+        if not os.path.exists(self.expt_name2):
+            os.mkdir(self.expt_name2)
         if not os.path.exists(dirname):
             os.mkdir(dirname)
         if not os.path.isdir(self.expt_name):
             os.system('mkdir -p '+self.expt_name)
-        self.writer = SummaryWriter(self.expt_name)
+        self.writer = SummaryWriter(self.expt_name2)
         self.log_file = open(output_name, 'w')
         self.infos = {}
 

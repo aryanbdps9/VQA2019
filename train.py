@@ -28,6 +28,7 @@ def train(model, train_loader, eval_loader, num_epochs, output):
     logger = utils.Logger(os.path.join(output, 'log.txt'))
     best_eval_score = 0
     loss_dist_fn = nn.MSELoss()
+    # eval_score, bound = evaluate(model, eval_loader)
 
     itr = 0
     for epoch in range(num_epochs):
@@ -37,7 +38,7 @@ def train(model, train_loader, eval_loader, num_epochs, output):
 
         for i, (v, b, q, a, word_vec) in enumerate(train_loader):
             itr += 1
-            # print("v.size", v.size(), "v.size(0)", v.size(0))
+            # print("v.size", v.size(), "v.size(0)", v.size(0), "itr", itr)
             v = Variable(v).cuda()
             b = Variable(b).cuda()
             q = Variable(q).cuda()
@@ -45,10 +46,15 @@ def train(model, train_loader, eval_loader, num_epochs, output):
             word_vec = word_vec.cuda()
 
             pred, pred_word_vec = model(v, b, q, a)
+            # print("pred_word_vec size = ", pred_word_vec.size())
+            # print("word_vec size = ", word_vec.size())
             loss_bce = instance_bce_with_logits(pred, a)
-            loss.backward()
+            
             loss_dist = loss_dist_fn(pred_word_vec, word_vec)
+            # loss_dist = 0
             loss = loss_bce + loss_dist
+            loss.backward()
+            
             nn.utils.clip_grad_norm_(model.parameters(), 0.25)
             optim.step()
             optim.zero_grad()
@@ -84,11 +90,14 @@ def evaluate(model, dataloader):
     score = 0
     upper_bound = 0
     num_data = 0
-    for v, b, q, a in iter(dataloader):
-        v = Variable(v, volatile=True).cuda()
-        b = Variable(b, volatile=True).cuda()
-        q = Variable(q, volatile=True).cuda()
-        pred = model(v, b, q, None)
+    for v, b, q, a, word_vec in iter(dataloader):
+        # v = Variable(v, volatile=True).cuda()
+        # b = Variable(b, volatile=True).cuda()
+        # q = Variable(q, volatile=True).cuda()
+        v = Variable(v).cuda()
+        b = Variable(b).cuda()
+        q = Variable(q).cuda()
+        pred, pred_word_vec = model(v, b, q, None)
         batch_score = compute_score_with_logits(pred, a.cuda()).sum()
         score += batch_score
         upper_bound += (a.max(1)[0]).sum()
