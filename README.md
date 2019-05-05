@@ -84,7 +84,7 @@ Their provided implementation loaded all the data into the RAM which overflowed 
 -->
 ## Reference
 1. [Tips and Tricks for Visual Question Answering:Learnings from the 2017 Challenge](https://arxiv.org/pdf/1708.02711.pdf)  
-2. [Their implementation of the above paper](https://github.com/hengyuan-hu/bottom-up-attention-vqa)
+2. [A nice implementation of the above paper](https://github.com/hengyuan-hu/bottom-up-attention-vqa)
 
 
 
