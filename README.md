@@ -44,11 +44,21 @@ provided by and downloaded from the original authors'
 correct format.
 
 ### Training
-Simply run `python main.py` to start training. The training and
+Simply run `python2 main.py` to start training. The training and
 validation scores will be printed every epoch, and the best model will
-be saved under the directory "saved_models".
+be saved under the directory "saved_models".  
+
+Training vec2char is done as follows
+```
+cd vec2char
+mkdir run
+mkdir weights
+python2 models.py
+```
 
 
+### Testing
+Simply run `python2 test_main.py` for test and it will print the answer predicted and ground truth by using trained both models main and the side vec2char model.
 
 <!---
 4. Results: If numerical, mention them in tabular format. If visual, display. If you've done a great project, this is the area to show it!
@@ -71,7 +81,10 @@ Their provided implementation loaded all the data into the RAM which overflowed 
   * Extract the word dictionary from all words used in questions and answer of VQA dataset and learn this vector to word mapping over the dictionary size of ~3K
 * Loading the data passed after ELMO embedding
   * For both the training data and validation data questions are separately passed through ELMO embedding and stored so that this extra pass over ELMO does not consume time over training of model which already was slow due to limited RAM and h5 being asynchronous.
-
+* Final integration
+  * Initially model trains over the data seperately. Model1 trying to predict embedding from question and image. Model2 predicting word from embedding.
+  * Test time. Model1 first predicts whether it's a yes/no question or not. If yes, it uses it's own softmax which behaves as an custom embedding. For other cases, embedding predicted is passed to the trained Model2 for word prediction which is our final output answer
+* vec2Char has a seperate README.
 
 
 ### Findings in VQAv2-dataset
