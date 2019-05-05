@@ -3,7 +3,10 @@ I'm providing a list of headers that the README MUST have below. You're free to 
 1. A brief abstract of your project including the problem statement and solution approach. If the project has cool visual results, you may provide one image or GIF of the results. See this for reference.
 # VQA : A CS763 Odyssey
 ## ABSTRACT
-
+### Problem Statement
+Given an input image and a question that can be answered by looking at the image.  
+### Our Approach
+Building on the idea of [this](https://arxiv.org/pdf/1708.02711.pdf) paper and [this](https://github.com/hengyuan-hu/bottom-up-attention-vqa) code, 
 
 2. A list of code dependencies.
 ## Code Dependencies
@@ -27,4 +30,5 @@ Please use Python2 for running this code
 
 6. References.
 ## Reference
-[Very Useful Reference](https://github.com/hengyuan-hu/bottom-up-attention-vqa)
+1. [Tips and Tricks for Visual Question Answering:Learnings from the 2017 Challenge](https://arxiv.org/pdf/1708.02711.pdf)  
+2. [Their implementation of the above paper](https://github.com/hengyuan-hu/bottom-up-attention-vqa)
