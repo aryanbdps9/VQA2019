@@ -43,6 +43,12 @@ provided by and downloaded from the original authors'
 `tools/process.sh` from the repository root to process the data to the
 correct format.
 
+### Training
+Simply run `python main.py` to start training. The training and
+validation scores will be printed every epoch, and the best model will
+be saved under the directory "saved_models".
+
+
 
 <!---
 4. Results: If numerical, mention them in tabular format. If visual, display. If you've done a great project, this is the area to show it!
