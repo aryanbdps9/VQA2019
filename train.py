@@ -44,7 +44,8 @@ def train(model, train_loader, eval_loader, num_epochs, output):
             q = Variable(q).cuda()
             a = Variable(a).cuda()
             word_vec = word_vec.cuda()
-
+            # print("a = " , a)
+            # print("q = " , q)
             pred, pred_word_vec = model(v, b, q, a)
             # print("pred_word_vec size = ", pred_word_vec.size())
             # print("word_vec size = ", word_vec.size())

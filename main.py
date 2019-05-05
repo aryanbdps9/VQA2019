@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES']='0'
+os.environ['CUDA_VISIBLE_DEVICES']='1'
 import argparse
 import torch
 import torch.nn as nn
@@ -56,4 +56,5 @@ if __name__ == '__main__' and True:
     model.cuda()
 
     model = nn.DataParallel(model).cuda()
+    print("save as == ", args.output)
     train(model, train_loader, eval_loader, args.epochs, args.output)

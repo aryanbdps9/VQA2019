@@ -74,6 +74,18 @@ def _create_entry(img, question, answer):
         'answer'      : answer}
     return entry
 
+def save_dict_to_file(dic, path):
+    fn = os.path.join(path, 'dict.txt')
+    f = open(fn,'w')
+    f.write(str(dic))
+    f.close()
+
+def load_dict_from_file(path):
+    fn = os.path.join(path, 'dict.txt')
+    f = open(fn,'r')
+    data=f.read()
+    f.close()
+    return eval(data)
 
 def _load_dataset(dataroot, name, img_id2val):
     """Load entries
@@ -115,6 +127,10 @@ class VQAFeatureDataset(Dataset):
         self.label2ans = cPickle.load(open(label2ans_path, 'rb'))
         self.glove_arr, self.w2glov = glove_arr, w2glov
         self.label2glove = {self.ans2label[w]:w2glov.get(w, -3) for w in self.ans2label.keys()}
+        # ans_path = os.path.join(dataroot, 'glove')
+        # ans2glove = {w:self.glove_arr[w2glov.get(w, -3),:] for w in self.ans2label.keys()}
+        # save_dict_to_file(ans2glove, ans_path)
+        # best_label_repr = torch.from_numpy(self.glove_arr[self.label2glove[best_label],:])
         # self.label2glove = {ans2label[w]:w2glov[w] for w in self.ans2label.keys()}
         self.num_ans_candidates = len(self.ans2label)
 
