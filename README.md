@@ -86,7 +86,7 @@ Their provided implementation loaded all the data into the RAM which overflowed 
 * Final integration
   * Initially model trains over the data seperately. Model1 trying to predict embedding from question and image. Model2 predicting word from embedding.
   * Test time. Model1 first predicts whether it's a yes/no question or not. If yes, it uses it's own softmax which behaves as an custom embedding. For other cases, embedding predicted is passed to the trained Model2 for word prediction which is our final output answer
-* vec2Char has a seperate README.
+
 
 
 ### Findings in VQAv2-dataset
