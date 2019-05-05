@@ -32,13 +32,25 @@ Make sure you are on a machine with a NVIDIA GPU with about 200 GB disk space an
 3. Detailed instructions for running the code, preferably, command instructions that may reproduce the declared results. If your code requires a model that can't be provided on GitHub, store it somewhere else and provide a download link.
 -->
 ## Setup
+### Data Setup
+All data should be downloaded to a 'data/' directory in the root
+directory of this repository.
+
+The easiest way to download the data is to run the provided script
+`tools/download.sh` from the repository root. The features are
+provided by and downloaded from the original authors'
+[repo](https://github.com/peteanderson80/bottom-up-attention). Then run
+`tools/process.sh` from the repository root to process the data to the
+correct format.
 
 
 <!---
 4. Results: If numerical, mention them in tabular format. If visual, display. If you've done a great project, this is the area to show it!
 -->
 ## Results
-* 
+* Re-running their fine-tuned model after ELMO  embedding 58.47
+
+The accuracy was calculated using the [VQA evaluation metric](http://www.visualqa.org/evaluation.html), same as the base code used.
 <!---
 5. Additional details, discussions, etc.
 -->
