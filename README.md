@@ -8,7 +8,7 @@ I'm providing a list of headers that the README MUST have below. You're free to 
 2. A list of code dependencies.
 ## Code Dependencies
 Please use Python2 for running this code
-Packages required
+#### Packages required
 * Cpickle
 * torch
 * numpy
