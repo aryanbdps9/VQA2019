@@ -6,7 +6,11 @@ I'm providing a list of headers that the README MUST have below. You're free to 
 ### Problem Statement
 Given an input image and a question that can be answered by looking at the image.  
 ### Our Approach
-Building on the idea of [this](https://arxiv.org/pdf/1708.02711.pdf) paper and [this](https://github.com/hengyuan-hu/bottom-up-attention-vqa) code, 
+Building on the idea of [this](https://arxiv.org/pdf/1708.02711.pdf) paper and [this](https://github.com/hengyuan-hu/bottom-up-attention-vqa) code, Our main expansion was following:
+* Change the word embeddings used in the project to ELMO as the latter uses the semantics over a sentence and hence is a boost from earlier GloVe which is a simple word to vector mapping.
+* Add an extra Square Distance loss in the training loop to output word embedding of answer which is then decoded back to word by another sister neural network which is a LSTM network taking word vector as input and characterwise predicts the output word corresponding to the embedding vector input.
+* Add a side classifier which takes input the embedded form of question and outputs whether its a YES/NO type answerable question and if that is true, the whole search space of answer collapses to two and predicted word embedding should be near to true vector and farther from the false vector answer.
+
 
 2. A list of code dependencies.
 ## Code Dependencies
