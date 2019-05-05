@@ -25,6 +25,8 @@ Please use Python2 for running this code
 * numpy
 * tensorboardX
 * h5py
+
+
 Make sure you are on a machine with a NVIDIA GPU with about 200 GB disk space and 16 GB RAM space.
 
 
