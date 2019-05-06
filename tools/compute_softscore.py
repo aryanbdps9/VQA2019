@@ -198,12 +198,18 @@ def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
             labels.append(ans2label[answer])
             score = get_score(answer_count[answer])
             scores.append(score)
+        answer_type = 2
+        if(ans_entry['multiple_choice_answer'] == 'no'):
+            answer_type = 0
+        elif(ans_entry['multiple_choice_answer'] == 'yes'):
+            answer_type = 1
 
         target.append({
             'question_id': ans_entry['question_id'],
             'image_id': ans_entry['image_id'],
             'labels': labels,
-            'scores': scores
+            'scores': scores,
+            'answer_type': answer_type
         })
 
     utils.create_dir(cache_root)

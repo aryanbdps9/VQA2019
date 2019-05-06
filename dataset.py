@@ -127,9 +127,9 @@ class VQAFeatureDataset(Dataset):
         self.label2ans = cPickle.load(open(label2ans_path, 'rb'))
         self.glove_arr, self.w2glov = glove_arr, w2glov
         self.label2glove = {self.ans2label[w]:w2glov.get(w, -3) for w in self.ans2label.keys()}
-        # ans_path = os.path.join(dataroot, 'glove')
+        # ans_path = os.path.join(dataroot, 'glove','answer2glove.npy')
         # ans2glove = {w:self.glove_arr[w2glov.get(w, -3),:] for w in self.ans2label.keys()}
-        # save_dict_to_file(ans2glove, ans_path)
+        # np.save(ans_path,ans2glove)
         # best_label_repr = torch.from_numpy(self.glove_arr[self.label2glove[best_label],:])
         # self.label2glove = {ans2label[w]:w2glov[w] for w in self.ans2label.keys()}
         self.num_ans_candidates = len(self.ans2label)
@@ -173,6 +173,7 @@ class VQAFeatureDataset(Dataset):
         # print("type features = ", type(self.features))#, type(self.features[0]))
         self.v_dim = self.features[0:1].shape[2]
         self.s_dim = self.spatials[0:1].shape[2]
+        self.cache = {}
         hf.close()
         hf_question_elmo.close()
 
@@ -203,6 +204,7 @@ class VQAFeatureDataset(Dataset):
             answer = entry['answer']
             labels = np.array(answer['labels'])
             scores = np.array(answer['scores'], dtype=np.float32)
+            ans_type = np.asarray([int(answer['answer_type'])])
             if len(labels):
                 best_label = labels[np.argmax(scores)]
                 best_label_repr = torch.from_numpy(self.glove_arr[self.label2glove[best_label],:])
@@ -211,16 +213,45 @@ class VQAFeatureDataset(Dataset):
                 entry['answer']['labels'] = labels
                 entry['answer']['scores'] = scores
                 entry['answer']['best_ansvec'] = best_label_repr
+                entry['answer']['answer_type'] = ans_type
             else:
                 entry['answer']['labels'] = None
                 entry['answer']['scores'] = None
                 entry['answer']['best_ansvec'] = None
+                entry['answer']['answer_type'] = np.asarray([2])
 
     def __getitem__(self, index):
         # index = 247573
         # print("getitem:{}[{}]".format(self.name, index))
         entry = self.entries[index]
         qid = entry['question_id']
+        # if 'entries' not in self.cache:
+        #     self.cache['entries'] = {}
+        # if index in self.cache['entries']:
+        #     entry_cache = self.cache['entries'][index]
+        #     features = entry_cache['features']
+        #     spatials = entry_cache['spatials']
+        #     question = entry_cache['question']
+        # else:
+        #     if(self.foLimit > 0):
+        #         self.foLimit -= 1
+        #         self.hflater = h5py.File(self.h5_path, 'r', swmr=True)
+        #         features = torch.from_numpy(self.hflater['image_features'][entry['image']])
+        #         spatials = torch.from_numpy(self.hflater['spatial_features'][entry['image']])
+        #         self.qhflater = h5py.File(self.question_elmo_path, 'r', swmr=True)
+        #         question = torch.tensor(self.qhflater[self.questions_idx[qid]])
+        #         print(self.name+":\topening file")
+        #     else:
+        #         features = torch.from_numpy(self.hflater['image_features'][entry['image']])
+        #         spatials = torch.from_numpy(self.hflater['spatial_features'][entry['image']])
+        #         question = torch.tensor(self.qhflater[self.questions_idx[qid]])
+        #     entry_cache = self.cache['entries'][index] = {}
+        #     entry_cache['features'] = features
+        #     entry_cache['spatials'] = spatials
+        #     entry_cache['question'] = question
+
+
+
         # print(type(qid))
         # print("entry['image']", entry['image'], "index", index)
 
@@ -235,7 +266,10 @@ class VQAFeatureDataset(Dataset):
             features = torch.from_numpy(self.hflater['image_features'][entry['image']])
             spatials = torch.from_numpy(self.hflater['spatial_features'][entry['image']])
             self.qhflater = h5py.File(self.question_elmo_path, 'r', swmr=True)
+            # qn_ = self.qhflater[self.questions_idx[qid]]
+            # print(qn_, "qn_")
             question = torch.tensor(self.qhflater[self.questions_idx[qid]])
+            print(self.name+":\topening file")
         else:
             features = torch.from_numpy(self.hflater['image_features'][entry['image']])
             spatials = torch.from_numpy(self.hflater['spatial_features'][entry['image']])
@@ -262,6 +296,8 @@ class VQAFeatureDataset(Dataset):
         labels = answer['labels']
         scores = answer['scores']
         ans_vec = answer['best_ansvec']
+        ans_type = answer['answer_type']
+        # print("ans_type", ans_type)
         if ans_vec is None:
             ans_vec = torch.zeros(300)
             # print("ans_vecof bestansvec is None")
@@ -270,7 +306,7 @@ class VQAFeatureDataset(Dataset):
             target.scatter_(0, labels, scores)
 
         # print("getitem:{}[{}]:\tquestion[{}], ans_vec[{}]".format(self.name, index,question.size(), ans_vec.size()))
-        return features, spatials, question, target, ans_vec
+        return features, spatials, question, target, ans_vec, ans_type
 
     def __len__(self):
         return len(self.entries)

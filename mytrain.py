@@ -6,10 +6,13 @@ import utils
 from torch.autograd import Variable
 
 
-def instance_bce_with_logits(logits, labels):
+def instance_bce_with_logits(logits, labels, not_yn=None):
     assert logits.dim() == 2
 
-    loss = nn.functional.binary_cross_entropy_with_logits(logits, labels)
+    loss = nn.functional.binary_cross_entropy_with_logits(logits, labels, reduction='none')
+    if not_yn is not None:
+        loss *= not_yn
+    loss = loss.mean()
     loss *= labels.size(1)
     return loss
 
@@ -25,6 +28,7 @@ def train(model, train_loader, eval_loader, num_epochs, output):
     utils.create_dir(output)
     optim = torch.optim.Adamax(model.parameters())
     logger = utils.Logger(os.path.join(output, 'log.txt'))
+    celos = torch.nn.CrossEntropyLoss()
     best_eval_score = 0
 
     for epoch in range(num_epochs):
@@ -32,14 +36,19 @@ def train(model, train_loader, eval_loader, num_epochs, output):
         train_score = 0
         t = time.time()
 
-        for i, (v, b, q, a) in enumerate(train_loader):
+        for i, (v, b, q, a, qtype) in enumerate(train_loader):
+            # qtype: 0 N; 1 Y; 2: others
             v = Variable(v).cuda()
             b = Variable(b).cuda()
             q = Variable(q).cuda()
             a = Variable(a).cuda()
 
-            pred = model(v, b, q, a) # this will be a vector
-            loss = instance_bce_with_logits(pred, a)
+
+            pred, pred_word_vec, pred_qtype = model(v, b, q, a) # this will be a vector
+            loss_bce = instance_bce_with_logits(pred, a)
+            loss_qtype = celos(pred_qtype, qtype)
+            not_yn = (qtype > 1).float()
+            loss = loss_bce * not_yn + loss_qtype
             loss.backward()
             nn.utils.clip_grad_norm(model.parameters(), 0.25)
             optim.step()
