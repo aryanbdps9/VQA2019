@@ -18,7 +18,7 @@ class YNclassifier(nn.Module):
             self.activ,
             nn.Linear(512, 128),
             self.activ,
-            nn.Linear(128,3)
+            nn.Linear(128,1)
         )
     
     def forward(self, q):
@@ -37,6 +37,14 @@ class BaseModel(nn.Module):
         self.classifier = classifier
         self.funnel = nn.Linear(1024, 300)
         self.q_classifier = YNclassifier(ndim=1024, n_hid=1024, dropout=dropout)
+        self.activ = nn.LeakyReLU()
+        self.yn_ans = nn.Sequential(
+            nn.Linear(1024, 512),
+            self.activ,
+            nn.Linear(512, 64),
+            self.activ,
+            nn.Linear(64,1)
+        )
 
     def forward(self, v, b, q, labels):
         """Forward
@@ -59,7 +67,7 @@ class BaseModel(nn.Module):
         v_repr = self.v_net(v_emb)
         joint_repr = q_repr * v_repr
         logits = self.classifier(joint_repr)
-        return logits, self.funnel(joint_repr), qtype
+        return logits, self.funnel(joint_repr), qtype, self.yn_ans(joint_repr)
 
 def build_baseline0(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
