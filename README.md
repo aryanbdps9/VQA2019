@@ -66,7 +66,9 @@ Simply run `python2 test_main.py` for test and it will print the answer predicte
 4. Results: If numerical, mention them in tabular format. If visual, display. If you've done a great project, this is the area to show it!
 -->
 ## Results
-* Re-running their fine-tuned model after ELMO  embedding 58.47
+* Running their tuned implementation ~61 
+* Re-running their model after ELMO  embedding and adding MSE loss 58.47 *Hyper parameter untuned*
+* vec2char model Good prediction for the dictionary of the words in VQA. 
 
 The accuracy was calculated using the [VQA evaluation metric](http://www.visualqa.org/evaluation.html), same as the base code used.
 <!---
