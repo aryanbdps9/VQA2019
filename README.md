@@ -66,11 +66,18 @@ Simply run `python2 test_main.py` for test and it will print the answer predicte
 4. Results: If numerical, mention them in tabular format. If visual, display. If you've done a great project, this is the area to show it!
 -->
 ## Results
+| Model | Validation Accuracy | HyperParameter tuned  
+| --- | ----- | -- |
+| Thier implementation| ~61 | Yes |  
+| Elmo Embedding + MSE Loss | 58.47 | No |  
+| ELMO + MSE + Binary classifier for Yes/No | 42.6 | No |  
+<!---
 * Running their tuned implementation ~61 
 * Re-running their model after ELMO  embedding and adding MSE loss 58.47 *Hyper parameter untuned*
 * Our latest model after adding additional classifier is not yet given any eval score. 
 * vec2char model Good prediction for the dictionary of the words in VQA. 
 ![vec2char](https://github.com/aryanbdps9/VQA2019/blob/master/vec2char.png)
+--->
 ### Note
 * The accuracy was calculated using the [VQA evaluation metric](http://www.visualqa.org/evaluation.html), same as the base code used.
 * For words not in Glove word dictionary, we replaced it with zero vector and hence in result for two word phrases, there is a consistent predication. 
