@@ -68,9 +68,12 @@ Simply run `python2 test_main.py` for test and it will print the answer predicte
 ## Results
 * Running their tuned implementation ~61 
 * Re-running their model after ELMO  embedding and adding MSE loss 58.47 *Hyper parameter untuned*
+* Our latest model after adding additional classifier is not yet given any eval score. 
 * vec2char model Good prediction for the dictionary of the words in VQA. 
-
-The accuracy was calculated using the [VQA evaluation metric](http://www.visualqa.org/evaluation.html), same as the base code used.
+![vec2char](https://github.com/aryanbdps9/VQA2019/blob/master/vec2char.png)
+### Note
+* The accuracy was calculated using the [VQA evaluation metric](http://www.visualqa.org/evaluation.html), same as the base code used.
+* For words not in Glove word dictionary, we replaced it with zero vector and hence in result for two word phrases, there is a consistent predication. 
 <!---
 5. Additional details, discussions, etc.
 -->
